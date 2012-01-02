@@ -35,6 +35,8 @@ class DBView(object):
 
     def serialize(self, request):
         """Unserialize the data from the request.
+
+        Also, use the mapping to control that the data is valid
         """
         try:
             return json.loads(request.body)
@@ -91,9 +93,9 @@ class DBView(object):
         self.dbsession.add(item)
         try:
             self.dbsession.commit()     # needed ?
-        except IntegrityError:
+        except IntegrityError, e:
             # that id is taken already,
-            self.request.errors.add('body', 'item', 'id already taken')
+            self.request.errors.add('body', 'item', e.message)
             self.dbsession.rollback()
             return json_error(self.request.errors)
 
