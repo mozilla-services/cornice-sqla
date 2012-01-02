@@ -21,8 +21,6 @@ class DBView(object):
     path = None
     collection_path = None
     session = None
-    serialize_item = None
-    deserialize_item = None
 
     def __init__(self, request):
         self.request = request
@@ -35,15 +33,15 @@ class DBView(object):
         items = self.dbsession.query(self.mapping)
         return {'items': [item for item in items]}
 
-    def serialize_item(self, request):
+    def serialize(self, request):
         """Unserialize the data from the request.
         """
         try:
-            return json.loads(request)
+            return json.loads(request.body)
         except ValueError:
             request.errors.append('body', 'item', 'Bad Json data!')
 
-    def deserialize_item(self, item):
+    def deserialize(self, item):
         output = {}
         for key in self.cols:
             output[key] = getattr(item, key)
@@ -62,7 +60,7 @@ class DBView(object):
             return self.post()
 
         # we can update
-        new_item = self.serialize_item(self.request)
+        new_item = self.serialize(self.request)
         if len(self.request.errors) > 0:
             return json_error(self.request.errors)
 
@@ -80,7 +78,7 @@ class DBView(object):
     def post(self):
         """Puts an item"""
         # serialize the request into a PUT-able item
-        item = self.serialize_item(self.request)
+        item = self.serialize(self.request)
         if len(self.request.errors) > 0:
             return json_error(self.request.errors)
 
@@ -110,7 +108,7 @@ class DBView(object):
             self.request.matchdict = None  # for cornice
             raise HTTPNotFound()
 
-        return {'item': self.deserialize_item(item)}
+        return self.deserialize(item)
 
     def delete(self):
         """Deletes one item"""

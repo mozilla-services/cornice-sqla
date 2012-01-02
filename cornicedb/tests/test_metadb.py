@@ -25,8 +25,8 @@ class TestMetaDB(unittest.TestCase):
 
         # let's see what we have now
         user = json.loads(self.app.get('/users/1').body)
-        self.assertEqual(user['item']['id'], 1)
-        self.assertEqual(user['item']['name'], 'tarek')
+        self.assertEqual(user['id'], 1)
+        self.assertEqual(user['name'], 'tarek')
 
         # let's kill the user
         self.app.delete('/users/1')
@@ -37,10 +37,10 @@ class TestMetaDB(unittest.TestCase):
         # we can also put for updates the root
         self.app.put('/users/1', params=json.dumps({'name': 'tarek'}))
         user = json.loads(self.app.get('/users/1').body)
-        self.assertEqual(user['item']['id'], 1)
-        self.assertEqual(user['item']['name'], 'tarek')
+        self.assertEqual(user['id'], 1)
+        self.assertEqual(user['name'], 'tarek')
 
         self.app.put('/users/1', params=json.dumps({'name': 'tarek2'}))
         user = json.loads(self.app.get('/users/1').body)
-        self.assertEqual(user['item']['id'], 1)
-        self.assertEqual(user['item']['name'], 'tarek2')
+        self.assertEqual(user['id'], 1)
+        self.assertEqual(user['name'], 'tarek2')

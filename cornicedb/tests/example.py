@@ -4,7 +4,6 @@ from colander import Invalid
 import json
 
 
-
 class UsersView(object):
     __metaclass__ = MetaDBView
 
@@ -13,7 +12,7 @@ class UsersView(object):
     collection_path = '/users'
     session = DBSession
 
-    def serialize_item(self, request):
+    def serialize(self, request):
         """Unserialize the data from the request."""
         try:
             user = json.loads(request.body)
