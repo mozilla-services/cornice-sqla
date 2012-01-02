@@ -14,7 +14,6 @@ class MetaDBView(type):
         return klass
 
 
-# XXX 'id' is hardcoded for now
 class DBView(object):
 
     mapping = None
@@ -28,21 +27,26 @@ class DBView(object):
         self.dbsession = self.session()
         self.cols = self.mapping.__table__.c.keys()
 
-    def collection_get(self):
-        """Returns a collection of items."""
-        # batch ?
-        items = self.dbsession.query(self.mapping)
-        return {'items': [item for item in items]}
-
-    def serialize(self, request):
-        """Unserialize the data from the request.
+    #
+    # Serialisation / deserialisation
+    #
+    def serialize(self):
+        """Serialize the data from the request.
 
         Also, use the mapping to control that the data is valid
         """
         try:
-            return json.loads(request.body)
+            return json.loads(self.request.body)
         except ValueError:
             request.errors.append('body', 'item', 'Bad Json data!')
+
+    def collection_serialize(self):
+        """Serialize
+        """
+        try:
+            return json.loads(self.request.body)
+        except ValueError:
+            self.request.errors.add('body', 'item', 'Bad Json data!')
 
     def deserialize(self, item):
         output = {}
@@ -50,8 +54,67 @@ class DBView(object):
             output[key] = getattr(item, key)
         return output
 
+    def collection_deserialize(self, items):
+        """ Deserialize a list
+        """
+        return [self.deserialize(item) for item in items]
+
+    #
+    # Collection management
+    #
+    def collection_get(self):
+        """Returns a collection of items.
+
+        XXX for now returns the full items
+        """
+        # batch ?
+        items = self.collection_deserialize(self.dbsession.query(self.mapping))
+        return {'items': items}
+
+    def _put_data(self, replace=False):
+        items = self.collection_serialize()
+        if len(self.request.errors) > 0:
+            return json_error(self.request.errors)
+
+        if replace:
+            # delete previous entries
+            self.dbsession.query(self.mapping).delete()
+
+        dbitems = []
+        for item in items:
+            item = self.mapping(**item)
+            self.dbsession.add(item)
+            dbitems.append(item)
+
+        self.dbsession.commit()
+        return {'ids': [item.id for item in dbitems]}
+
+    def collection_post(self):
+        """Create one or several new entries in the collection.
+
+        The new entries ids are assigned automatically and returned.
+        """
+        return self._put_data()
+
+    def collection_put(self):
+        """Replace the entire collection with the new items.
+
+        The new entries ids are assigned automatically and returned.
+        """
+        return self._put_data(replace=True)
+
+    def collection_delete(self):
+        """Deletes the entire collection.
+        """
+        # delete all entries
+        deleted = self.dbsession.query(self.mapping).delete()
+        return {'deleted': deleted}
+
+    #
+    # Item management
+    #
     def put(self):
-        """Updates or create an item."""
+        """Updates or creates an item."""
         # grab the id
         id_ = int(self.request.matchdict[self.match_key])
 
@@ -63,7 +126,7 @@ class DBView(object):
             return self.post()
 
         # we can update
-        new_item = self.serialize(self.request)
+        new_item = self.serialize()
         if len(self.request.errors) > 0:
             return json_error(self.request.errors)
 
@@ -79,9 +142,9 @@ class DBView(object):
         return {'status': 'OK'}
 
     def post(self):
-        """Puts an item"""
+        """Creates an item"""
         # serialize the request into a PUT-able item
-        item = self.serialize(self.request)
+        item = self.serialize()
         if len(self.request.errors) > 0:
             return json_error(self.request.errors)
 
@@ -95,7 +158,7 @@ class DBView(object):
         try:
             self.dbsession.commit()     # needed ?
         except IntegrityError, e:
-            # that id is taken already,
+            # that id is taken already probably,
             self.request.errors.add('body', 'item', e.message)
             self.dbsession.rollback()
             return json_error(self.request.errors)
@@ -117,7 +180,6 @@ class DBView(object):
         """Deletes one item"""
         id_ = int(self.request.matchdict[self.match_key])
         item = self.dbsession.query(self.mapping)
-        # catch issue if object does not exist then 404 XXX
         deleted = item.filter(self.mapping.id==id_).delete()
         if deleted == 0:
             self.request.matchdict = None  # for cornice

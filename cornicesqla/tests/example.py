@@ -12,10 +12,10 @@ class UsersView(object):
     collection_path = '/users'
     session = DBSession
 
-    def serialize(self, request):
+    def serialize(self):
         """Unserialize the data from the request."""
         try:
-            user = json.loads(request.body)
+            user = json.loads(self.request.body)
         except ValueError:
             request.errors.add('body', 'item', 'Bad Json data!')
             # let's quit
