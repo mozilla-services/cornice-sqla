@@ -21,6 +21,7 @@ class DBView(object):
     path = None
     collection_path = None
     session = None
+    match_key = primary_key = 'id'
 
     def __init__(self, request):
         self.request = request
@@ -52,7 +53,7 @@ class DBView(object):
     def put(self):
         """Updates or create an item."""
         # grab the id
-        id_ = int(self.request.matchdict['id'])
+        id_ = int(self.request.matchdict[self.match_key])
 
         # is that an existing item ?
         item = self.dbsession.query(self.mapping)
@@ -67,7 +68,7 @@ class DBView(object):
             return json_error(self.request.errors)
 
         for key in self.cols:
-            if key == 'id':
+            if key == self.primary_key:
                 continue
             new_value = new_item[key]
             value = getattr(item, key)
@@ -85,7 +86,7 @@ class DBView(object):
             return json_error(self.request.errors)
 
         # grab the id
-        id_ = int(self.request.matchdict['id'])
+        id_ = int(self.request.matchdict[self.match_key])
 
         # create a User object now
         item = self.mapping(id=id_, **item)
@@ -103,7 +104,7 @@ class DBView(object):
 
     def get(self):
         """Returns one item"""
-        id_ = int(self.request.matchdict['id'])
+        id_ = int(self.request.matchdict[self.match_key])
         item = self.dbsession.query(self.mapping)
         item = item.filter(self.mapping.id==id_).first()
         if item is None:
@@ -114,7 +115,7 @@ class DBView(object):
 
     def delete(self):
         """Deletes one item"""
-        id_ = int(self.request.matchdict['id'])
+        id_ = int(self.request.matchdict[self.match_key])
         item = self.dbsession.query(self.mapping)
         # catch issue if object does not exist then 404 XXX
         deleted = item.filter(self.mapping.id==id_).delete()
