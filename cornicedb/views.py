@@ -24,11 +24,13 @@ class DBView(object):
         self.session = DBSession()
 
     def collection_get(self):
+        """Returns a collection of items."""
         # batch ?
         items = self.session.query(self.mapping)
         return {'items': [item for item in items]}
 
     def get(self):
+        """Returns one item"""
         id_ = int(self.request.matchdict['id'])
         item = self.session.query(self.mapping)
         item = item.filter(self.mapping.id==id_).first()
@@ -36,3 +38,13 @@ class DBView(object):
             self.request.matchdict = None  # for cornice
             raise HTTPNotFound()
         return {'item': item}
+
+    def delete(self):
+        """Delete one item"""
+        id_ = int(self.request.matchdict['id'])
+        item = self.session.query(self.mapping)
+        # catch issue if object does not exist then 404 XXX
+        item.filter(self.mapping.id==id_).delete()
+        return {'status': 'OK'}
+
+
