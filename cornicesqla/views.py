@@ -87,7 +87,7 @@ class DBView(object):
             dbitems.append(item)
 
         self.dbsession.commit()
-        return {'ids': [item.id for item in dbitems]}
+        return {'ids': [getattr(item, self.primary_key) for item in dbitems]}
 
     def collection_post(self):
         """Create one or several new entries in the collection.
