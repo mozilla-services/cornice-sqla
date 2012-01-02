@@ -1,5 +1,5 @@
 import unittest
-from cornicedb.tests.wsgiapp import main
+from cornicesqla.tests.wsgiapp import main
 from webtest import TestApp
 import json
 import os

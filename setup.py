@@ -13,7 +13,7 @@ with open(os.path.join(here, 'CHANGES.txt')) as f:
 requires = ['cornice', 'SQLAlchemy', 'WebTest', 'Colander']
 
 
-setup(name='cornicedb',
+setup(name='cornicesqla',
       version='0.1',
       description='CRUD for Cornice & SQLALchemy',
       long_description=README + '\n\n' + CHANGES,

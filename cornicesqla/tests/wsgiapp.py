@@ -1,14 +1,14 @@
 from pyramid.config import Configurator
 from sqlalchemy import create_engine
 
-from cornicedb.tests.models import initialize_sql
+from cornicesqla.tests.models import initialize_sql
 
 
 def main(global_config, **settings):
     config = Configurator(settings=settings)
     config.include("cornice")
-    config.scan("cornicedb.tests.models")
-    config.scan("cornicedb.tests.example")
+    config.scan("cornicesqla.tests.models")
+    config.scan("cornicesqla.tests.example")
     engine = create_engine('sqlite:////tmp/cornice.db')
     initialize_sql(engine)
     return config.make_wsgi_app()

@@ -1,5 +1,5 @@
-from cornicedb.views import MetaDBView
-from cornicedb.tests.models import Users, DBSession, UsersValidation
+from cornicesqla.views import MetaDBView
+from cornicesqla.tests.models import Users, DBSession, UsersValidation
 from colander import Invalid
 import json
 
