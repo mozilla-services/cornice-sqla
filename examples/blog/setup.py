@@ -1,7 +1,7 @@
 import os
 from setuptools import setup, find_packages
 
-requires = ['cornice', 'cornicesqla']
+requires = ['cornice', 'cornicesqla', 'Mako']
 
 
 setup(name='myblog',

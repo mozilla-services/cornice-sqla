@@ -1,9 +1,14 @@
-from cornicesqla.views import MetaDBView
+from cornicesqla import MetaDBView
+from cornice import Service
+from pyramid.view import view_config
 
-from myblog import BlogEntry, BlogUser, DBSession
+from myblog.models import BlogEntry, BlogUser, DBSession
 import json
 
 
+#
+# CRUD
+#
 class BlogView(object):
     __metaclass__ = MetaDBView
 
@@ -20,3 +25,11 @@ class BlogUser(object):
     path = '/users/{id}'
     collection_path = '/users'
     session = DBSession
+
+
+#
+# JS UI
+#
+@view_config(route_name='jsui', renderer='myblog:templates/home.mako')
+def home(request):
+    return {'title': 'Welcome to My Blog'}

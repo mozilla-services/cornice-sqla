@@ -1,8 +1,10 @@
-from pyramid.exceptions import HTTPNotFound
-from cornice.resource import resource, view
-from cornice.util import to_list, json_error
-from sqlalchemy.exc import IntegrityError
 import json
+
+from pyramid.exceptions import HTTPNotFound
+from sqlalchemy.exc import IntegrityError
+
+from cornice.resource import resource
+from cornice.util import to_list, json_error
 
 
 class MetaDBView(type):
@@ -132,6 +134,8 @@ class DBView(object):
 
         for key in self.cols:
             if key == self.primary_key:
+                continue
+            if key not in new_item:
                 continue
             new_value = new_item[key]
             value = getattr(item, key)
