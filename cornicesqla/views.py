@@ -3,31 +3,14 @@ import json
 from pyramid.exceptions import HTTPNotFound
 from sqlalchemy.exc import IntegrityError
 
-from cornice.resource import resource
 from cornice.util import to_list, json_error
-
-
-class MetaDBView(type):
-    def __new__(meta, name, bases, class_dict):
-        bases = (DBView,) + bases
-        klass = type.__new__(meta, name, bases, class_dict)
-        klass = resource(collection_path = klass.collection_path,
-                         path = klass.path)(klass)
-        return klass
+from cornicesqla.crud import crud
 
 
 class DBView(object):
 
-    mapping = None
-    path = None
-    collection_path = None
-    session = None
-    match_key = primary_key = 'id'
-
     def __init__(self, request):
         self.request = request
-        self.dbsession = self.session()
-        self.cols = self.mapping.__table__.c.keys()
 
     #
     # Serialisation / deserialisation

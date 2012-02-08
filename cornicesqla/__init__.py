@@ -1,1 +1,2 @@
-from cornicesqla .views import MetaDBView
+from cornicesqla.crud import crud
+

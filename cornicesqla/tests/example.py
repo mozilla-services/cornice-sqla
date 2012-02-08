@@ -1,16 +1,17 @@
-from cornicesqla.views import MetaDBView
+from cornicesqla.views import DBView
 from cornicesqla.tests.models import Users, DBSession, UsersValidation
 from colander import Invalid
 import json
 
+from cornicesqla.crud import crud
 
-class UsersView(object):
-    __metaclass__ = MetaDBView
 
-    mapping = Users
-    path = '/users/{id}'
-    collection_path = '/users'
-    session = DBSession
+@crud(path='/users/{id}', collection_path='/users',
+      mapping=Users, session=DBSession)
+class UsersView(DBView):
+
+    def __init__(self, request):
+        self.request = request
 
     def serialize(self):
         """Unserialize the data from the request."""
