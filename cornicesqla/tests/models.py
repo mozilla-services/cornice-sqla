@@ -1,5 +1,5 @@
-from sqlalchemy.ext.declarative import declarative_base, Column
-from sqlalchemy import Integer, String, Text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Integer, String, Text, Column
 from sqlalchemy.orm import scoped_session, sessionmaker
 import colander
 
