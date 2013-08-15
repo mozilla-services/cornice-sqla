@@ -8,14 +8,14 @@ here = os.path.dirname(__file__)
 
 
 def main(global_config, **settings):
-    config = Configurator(settings=settings)
-    config.include("cornice")
-    config.scan("myblog.models")
-    config.scan("myblog.views")
-    config.add_static_view(name='assets', path='myblog:assets')
-    config.add_route("jsui", "/")
     engine = create_engine('sqlite:////tmp/myblog.db')
     initialize_sql(engine)
+    config = Configurator(settings=settings)
+    config.include("cornice")
+    config.add_static_view(name='assets', path='myblog:assets')
+    config.add_route("jsui", "/")
+    config.scan("myblog.models")
+    config.scan("myblog.views")
     return config.make_wsgi_app()
 
 

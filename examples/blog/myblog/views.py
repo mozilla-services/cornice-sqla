@@ -1,32 +1,21 @@
-from cornicesqla import MetaDBView
+from cornicesqla.views import DBView
 from cornice import Service
 from pyramid.view import view_config
 
 from myblog.models import BlogEntry, BlogUser, DBSession
 import json
 
+from cornicesqla.crud import crud
 
-#
-# CRUD
-#
-class BlogView(object):
-    __metaclass__ = MetaDBView
+@crud(path='/blog/{id}', collection_path='/blog',
+      mapping=BlogEntry, session=DBSession)
+class BlogView(DBView):
+    pass
 
-    mapping = BlogEntry
-    path = '/blog/{id}'
-    collection_path = '/blog'
-    session = DBSession
-
-
-class BlogUser(object):
-    __metaclass__ = MetaDBView
-
-    mapping = BlogUser
-    path = '/users/{id}'
-    collection_path = '/users'
-    session = DBSession
-
-
+@crud(path='/users/{id}', collection_path='/users',
+      mapping=BlogUser, session=DBSession)
+class BlogUserView(DBView):
+    pass
 #
 # JS UI
 #
