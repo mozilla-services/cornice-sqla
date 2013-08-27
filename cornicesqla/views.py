@@ -12,6 +12,11 @@ class DBView(object):
     def __init__(self, request):
         self.request = request
 
+    @property
+    def query_factory(self):
+        """ query_factory for controlling users access"""
+        return self.dbsession.query(self.mapping)
+
     #
     # Serialisation / deserialisation
     #
@@ -53,7 +58,7 @@ class DBView(object):
         XXX for now returns the full items
         """
         # batch ?
-        items = self.collection_deserialize(self.dbsession.query(self.mapping))
+        items = self.collection_deserialize(self.query_factory)
         return {'items': items}
 
     def _put_data(self, replace=False):
@@ -63,7 +68,7 @@ class DBView(object):
 
         if replace:
             # delete previous entries
-            self.dbsession.query(self.mapping).delete()
+            self.query_factory.delete()
 
         dbitems = []
         for item in items:
@@ -92,7 +97,7 @@ class DBView(object):
         """Deletes the entire collection.
         """
         # delete all entries
-        deleted = self.dbsession.query(self.mapping).delete()
+        deleted = self.query_factory.delete()
         return {'deleted': deleted}
 
     #
@@ -104,7 +109,7 @@ class DBView(object):
         id_ = int(self.request.matchdict[self.match_key])
 
         # is that an existing item ?
-        item = self.dbsession.query(self.mapping)
+        item = self.query_factory
         item = item.filter(self.mapping.id==id_).first()
         if item is None:
             # then we can post
@@ -155,7 +160,7 @@ class DBView(object):
     def get(self):
         """Returns one item"""
         id_ = int(self.request.matchdict[self.match_key])
-        item = self.dbsession.query(self.mapping)
+        item = self.query_factory
         item = item.filter(self.mapping.id==id_).first()
         if item is None:
             self.request.matchdict = None  # for cornice
@@ -166,7 +171,7 @@ class DBView(object):
     def delete(self):
         """Deletes one item"""
         id_ = int(self.request.matchdict[self.match_key])
-        item = self.dbsession.query(self.mapping)
+        item = self.query_factory
         deleted = item.filter(self.mapping.id==id_).delete()
         if deleted == 0:
             self.request.matchdict = None  # for cornice
