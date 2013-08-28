@@ -1,4 +1,5 @@
 import json
+import transaction
 
 from pyramid.exceptions import HTTPNotFound
 from sqlalchemy.exc import IntegrityError
@@ -76,7 +77,7 @@ class DBView(object):
             self.dbsession.add(item)
             dbitems.append(item)
 
-        self.dbsession.commit()
+        transaction.commit()
         return {'ids': [getattr(item, self.primary_key) for item in dbitems]}
 
     def collection_post(self):
@@ -107,7 +108,6 @@ class DBView(object):
         """Updates or creates an item."""
         # grab the id
         id_ = int(self.request.matchdict[self.match_key])
-
         # is that an existing item ?
         item = self.query_factory
         item = item.filter(self.mapping.id==id_).first()
@@ -130,7 +130,7 @@ class DBView(object):
             if new_value != value:
                 setattr(item, key, new_value)
 
-        self.dbsession.commit()     # needed ?
+        transaction.commit()     # needed ?
         return {'status': 'OK'}
 
     def post(self):
@@ -148,7 +148,7 @@ class DBView(object):
 
         self.dbsession.add(item)
         try:
-            self.dbsession.commit()     # needed ?
+            transaction.commit()     # needed ?
         except IntegrityError, e:
             # that id is taken already probably,
             self.request.errors.add('body', 'item', e.message)
