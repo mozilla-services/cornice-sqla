@@ -28,7 +28,7 @@ class DBView(object):
         try:
             return json.loads(self.request.body)
         except ValueError:
-            request.errors.append('body', 'item', 'Bad Json data!')
+            self.request.errors.add('body', 'item', 'Bad Json data!')
 
     def collection_serialize(self):
         """Serialize
