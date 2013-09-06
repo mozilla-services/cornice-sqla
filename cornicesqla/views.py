@@ -59,8 +59,12 @@ class DBView(object):
         XXX for now returns the full items
         """
         # batch ?
-        items = self.collection_deserialize(self.query_factory)
-        return {'items': items}
+        items = apply_filters_from_request(
+            self.request, self.mapping, self.query_factory)
+        items = self.collection_deserialize(items)
+
+        return {'items': batching(self.request, items),
+                'total': len(items) }
 
     def _put_data(self, replace=False):
         items = self.collection_serialize()
