@@ -1,5 +1,10 @@
 from cornice import Service
 from functools import partial
+try:
+    import venusian
+    VENUSIAN = True
+except ImportError:
+    VENUSIAN = False
 
 
 def _setdel(klass, key, mapping, default=None):
@@ -59,19 +64,30 @@ def crud(**kw):
                     continue
 
                 meth = getattr(klass, view_attr)
-                views = getattr(meth, '__views__', [])
-                verb_dec = getattr(service, verb)
 
-                if views:
-                    for view_args in views:
-                        view_args = dict(service_args, **view_args)
-                        view_args['attr'] = view_attr
-                        del view_args['path']
-                        verb_dec(**view_args)(klass)
-                else:
-                    verb_dec(attr=view_attr)(klass)
+                if meth is not None:
+                    # if the method has a __views__ arguments, then it had
+                    # been decorated by a @view decorator. get back the name of
+                    # the decorated method so we can register it properly
+                    views = getattr(meth, '__views__', [])
+                    if views:
+                        for view_args in views:
+                            service.add_view(verb, view_attr, klass=klass,
+                                              **view_args)
+                    else:
+                        service.add_view(verb, view_attr, klass=klass)
 
         setattr(klass, '_services', services)
+        if VENUSIAN:
+            def callback(context, name, ob):
+                # get the callbacks registred by the inner services
+                # and call them from here when the @resource classes are being
+                # scanned by venusian.
+                for service in services.values():
+                    config = context.config.with_package(info.module)
+                    config.add_cornice_service(service)
+
+            info = venusian.attach(klass, callback, category='pyramid')
         return klass
     return wrapper
 

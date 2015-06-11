@@ -1,4 +1,5 @@
 import json
+import transaction
 
 from pyramid.exceptions import HTTPNotFound
 from sqlalchemy.exc import IntegrityError
@@ -6,11 +7,18 @@ from sqlalchemy.exc import IntegrityError
 from cornice.util import to_list, json_error
 from cornicesqla.crud import crud
 
-
+# TODO: !!!
 class DBView(object):
 
     def __init__(self, request):
         self.request = request
+        # TODO: !!!
+
+    @property
+    def query_factory(self):
+        # TODO: !!!
+        """ query_factory for controlling users access"""
+        return self.dbsession.query(self.mapping)
 
     #
     # Serialisation / deserialisation
@@ -23,11 +31,12 @@ class DBView(object):
         try:
             return json.loads(self.request.body)
         except ValueError:
-            request.errors.append('body', 'item', 'Bad Json data!')
+            self.request.errors.add('body', 'item', 'Bad Json data!')
 
     def collection_serialize(self):
         """Serialize
         """
+        # TODO: !!!
         try:
             return json.loads(self.request.body)
         except ValueError:
@@ -35,6 +44,7 @@ class DBView(object):
 
     def deserialize(self, item):
         output = {}
+        # TODO: !!!
         for key in self.cols:
             output[key] = getattr(item, key)
         return output
@@ -42,6 +52,7 @@ class DBView(object):
     def collection_deserialize(self, items):
         """ Deserialize a list
         """
+        # TODO: !!!
         return [self.deserialize(item) for item in items]
 
     #
@@ -53,8 +64,12 @@ class DBView(object):
         XXX for now returns the full items
         """
         # batch ?
-        items = self.collection_deserialize(self.dbsession.query(self.mapping))
-        return {'items': items}
+        items = apply_filters_from_request(
+            self.request, self.mapping, self.query_factory)
+        items = self.collection_deserialize(items)
+
+        return {'items': batching(self.request, items),
+                'total': len(items) }
 
     def _put_data(self, replace=False):
         items = self.collection_serialize()
@@ -63,7 +78,7 @@ class DBView(object):
 
         if replace:
             # delete previous entries
-            self.dbsession.query(self.mapping).delete()
+            self.query_factory.delete()
 
         dbitems = []
         for item in items:
@@ -71,7 +86,7 @@ class DBView(object):
             self.dbsession.add(item)
             dbitems.append(item)
 
-        self.dbsession.commit()
+        transaction.commit()
         return {'ids': [getattr(item, self.primary_key) for item in dbitems]}
 
     def collection_post(self):
@@ -92,7 +107,7 @@ class DBView(object):
         """Deletes the entire collection.
         """
         # delete all entries
-        deleted = self.dbsession.query(self.mapping).delete()
+        deleted = self.query_factory.delete()
         return {'deleted': deleted}
 
     #
@@ -102,9 +117,8 @@ class DBView(object):
         """Updates or creates an item."""
         # grab the id
         id_ = int(self.request.matchdict[self.match_key])
-
         # is that an existing item ?
-        item = self.dbsession.query(self.mapping)
+        item = self.query_factory
         item = item.filter(self.mapping.id==id_).first()
         if item is None:
             # then we can post
@@ -125,7 +139,7 @@ class DBView(object):
             if new_value != value:
                 setattr(item, key, new_value)
 
-        self.dbsession.commit()     # needed ?
+        transaction.commit()     # needed ?
         return {'status': 'OK'}
 
     def post(self):
@@ -143,7 +157,7 @@ class DBView(object):
 
         self.dbsession.add(item)
         try:
-            self.dbsession.commit()     # needed ?
+            transaction.commit()     # needed ?
         except IntegrityError, e:
             # that id is taken already probably,
             self.request.errors.add('body', 'item', e.message)
@@ -155,7 +169,7 @@ class DBView(object):
     def get(self):
         """Returns one item"""
         id_ = int(self.request.matchdict[self.match_key])
-        item = self.dbsession.query(self.mapping)
+        item = self.query_factory
         item = item.filter(self.mapping.id==id_).first()
         if item is None:
             self.request.matchdict = None  # for cornice
@@ -166,7 +180,7 @@ class DBView(object):
     def delete(self):
         """Deletes one item"""
         id_ = int(self.request.matchdict[self.match_key])
-        item = self.dbsession.query(self.mapping)
+        item = self.query_factory
         deleted = item.filter(self.mapping.id==id_).delete()
         if deleted == 0:
             self.request.matchdict = None  # for cornice
