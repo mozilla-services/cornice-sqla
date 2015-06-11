@@ -12,9 +12,11 @@ class DBView(object):
 
     def __init__(self, request):
         self.request = request
+        # TODO: !!!
 
     @property
     def query_factory(self):
+        # TODO: !!!
         """ query_factory for controlling users access"""
         return self.dbsession.query(self.mapping)
 
@@ -34,6 +36,7 @@ class DBView(object):
     def collection_serialize(self):
         """Serialize
         """
+        # TODO: !!!
         try:
             return json.loads(self.request.body)
         except ValueError:
@@ -41,6 +44,7 @@ class DBView(object):
 
     def deserialize(self, item):
         output = {}
+        # TODO: !!!
         for key in self.cols:
             output[key] = getattr(item, key)
         return output
@@ -48,6 +52,7 @@ class DBView(object):
     def collection_deserialize(self, items):
         """ Deserialize a list
         """
+        # TODO: !!!
         return [self.deserialize(item) for item in items]
 
     #
